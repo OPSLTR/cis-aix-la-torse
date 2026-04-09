@@ -551,10 +551,15 @@ function normDate(d){
   return d;
 }
 function normPeriode(p){
-  const l=p.toLowerCase().trim();
-  if(l.includes('jour')||l==='1'||l==='p1'||/07:15.*19:15/.test(l))return'Jour';
-  if(l.includes('nuit')||l==='2'||l==='p2'||/19:15.*07:15/.test(l))return'Nuit';
-  return p;
+  const l=(p||'').toString().trim();
+  if(!l) return '';
+  const low=l.toLowerCase();
+  if(low==='1'||low==='p1') return 'Jour';
+  if(low==='2'||low==='p2') return 'Nuit';
+  if(low.includes('jour')) return 'Jour';
+  if(low.includes('nuit')) return 'Nuit';
+  if(/\d/.test(low)) return detectPeriode(low);
+  return l;
 }
 
 // ══════ DASHBOARD ══════
