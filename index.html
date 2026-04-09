@@ -611,19 +611,50 @@ function renderEngins(data){
 }
 
 function renderMonthly(data){
-  const counts={};
-  data.forEach(d=>{const ym=d.date.slice(0,7);counts[ym]=(counts[ym]||0)+1});
-  const keys=Object.keys(counts).sort();
-  if(!keys.length){document.getElementById('monthlyChart').innerHTML='';return}
-  const months=[],cur=new Date(keys[0]+'-01'),last=new Date(keys[keys.length-1]+'-01');
-  while(cur<=last){months.push(cur.toISOString().slice(0,7));cur.setMonth(cur.getMonth()+1)}
-  const max=Math.max(...Object.values(counts),1);
   const chart=document.getElementById('monthlyChart');
-  chart.style.gridTemplateColumns=`repeat(${months.length},1fr)`;
+  if(!chart) return;
+
+  const counts={};
+  data.forEach(d=>{
+    const dateStr=(d?.date||'').toString().trim();
+    const m=dateStr.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if(!m) return;
+    const ym=`${m[1]}-${m[2]}`;
+    counts[ym]=(counts[ym]||0)+1;
+  });
+
+  const keys=Object.keys(counts).sort();
+  if(!keys.length){
+    chart.innerHTML='';
+    chart.style.gridTemplateColumns='1fr';
+    return;
+  }
+
+  function nextMonth(ym){
+    let [y,m]=ym.split('-').map(Number);
+    m += 1;
+    if(m===13){m=1;y+=1;}
+    return `${y}-${String(m).padStart(2,'0')}`;
+  }
+
+  const months=[];
+  let cur=keys[0];
+  const last=keys[keys.length-1];
+  let guard=0;
+  while(cur<=last && guard<240){
+    months.push(cur);
+    cur=nextMonth(cur);
+    guard++;
+  }
+
+  const max=Math.max(...months.map(ym=>counts[ym]||0),1);
+  chart.style.gridTemplateColumns=`repeat(${months.length}, minmax(36px,1fr))`;
   chart.innerHTML=months.map(ym=>{
-    const c=counts[ym]||0,h=Math.round(c/max*90),[y,m]=ym.split('-');
-    return`<div class="month-bar-wrap"><div class="month-bar-count">${c||''}</div>
-      <div class="month-bar" style="height:${Math.max(h,c?4:2)}px"></div>
+    const c=counts[ym]||0;
+    const h=c ? Math.max(8, Math.round((c/max)*90)) : 2;
+    const [y,m]=ym.split('-');
+    return `<div class="month-bar-wrap" title="${MONTHS[+m-1]} ${y}: ${c} garde(s)"><div class="month-bar-count">${c||''}</div>
+      <div class="month-bar" style="height:${h}px"></div>
       <div class="month-bar-label">${MONTHS[+m-1]}<br><span style="font-size:.6rem;opacity:.6">${y.slice(2)}</span></div></div>`;
   }).join('');
 }
