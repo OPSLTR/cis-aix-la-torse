@@ -19,7 +19,7 @@ window.FIREBASE_CONFIG = {
   messagingSenderId: "655797690177",
   appId:             "1:655797690177:web:e51ed7e1f3a5dd31458bc0"
 };
-window.ADMIN_PASSWORD = "ops@LTR!";
+window.ADMIN_PASSWORD = "ops@LTR!"; //
 </script>
 
 <style>
@@ -137,7 +137,10 @@ input::placeholder{color:var(--gris)}
 </head>
 <body>
 
-
+<div id="loadingOverlay">
+  <div class="spinner"></div>
+  <div id="loadingText">Connexion à Firebase…</div>
+</div>
 
 <header>
   <div class="header-left">
@@ -279,10 +282,10 @@ import { getFirestore, collection, getDocs, writeBatch, doc, query, orderBy, del
 function setStatus(cls, txt) {
   document.getElementById('connStatus').innerHTML = `<span class="dot ${cls}"></span> ${txt}`;
 }
-function hideLoader() { document.getElementById('loadingOverlay').style.display='none'; }
+function hideLoader() { const el = document.getElementById('loadingOverlay'); if (el) el.style.display='none'; }
 
 const cfg = window.FIREBASE_CONFIG;
-if (cfg.apiKey === 'VOTRE_API_KEY') {
+if (!cfg || !cfg.apiKey || cfg.apiKey === 'VOTRE_API_KEY') {
   const b = document.getElementById('notConfiguredBanner');
   b.style.display='block';
   b.innerHTML = `⚙️ <strong>Firebase non configuré.</strong> Ouvrez ce fichier HTML dans un éditeur de texte et remplissez les valeurs <code>FIREBASE_CONFIG</code> en haut.<br>
@@ -369,6 +372,7 @@ window.onDataLoaded = function(records) {
 // ══════ ADMIN ══════
 function toggleAdmin() {
   const p = document.getElementById('adminPanel');
+  if (!p) return;
   p.style.display = p.style.display==='none' ? 'block' : 'none';
 }
 function checkPwd() {
@@ -423,17 +427,28 @@ function handleFiles(list) {
 
 function refreshFileUI(){
   const total=pendingFiles.reduce((s,f)=>s+f.records.length,0);
-  document.getElementById('fCount').textContent=pendingFiles.length;
-  document.getElementById('rCount').textContent=total;
-  document.getElementById('fItems').innerHTML=pendingFiles.map(f=>`
+  const fCount=document.getElementById('fCount');
+  const rCount=document.getElementById('rCount');
+  const fItems=document.getElementById('fItems');
+  const fileList=document.getElementById('fileList');
+  const uploadBtn=document.getElementById('uploadBtn');
+  const s=document.getElementById('dzStatus');
+
+  if(!fCount||!rCount||!fItems||!fileList||!uploadBtn||!s){
+    console.error('Éléments UI manquants dans refreshFileUI');
+    return;
+  }
+
+  fCount.textContent=pendingFiles.length;
+  rCount.textContent=total;
+  fItems.innerHTML=pendingFiles.map(f=>`
     <div style="display:flex;align-items:center;gap:.5rem;background:var(--acier);padding:.3rem .6rem;border-radius:2px;font-size:.8rem">
       <span style="color:${f.ok&&f.records.length?'#2ECC71':'#E74C3C'}">${f.ok&&f.records.length?'✔':'⚠'}</span>
       <span style="flex:1;color:var(--blanc-casse)">${f.name}</span>
       <span style="color:var(--gris-clair);font-family:'Barlow Condensed',sans-serif">${f.records.length} aff.</span>
     </div>`).join('');
-  document.getElementById('fileList').style.display=pendingFiles.length?'block':'none';
-  document.getElementById('uploadBtn').disabled=total===0;
-  const s=document.getElementById('dzStatus');
+  fileList.style.display=pendingFiles.length?'block':'none';
+  uploadBtn.disabled=total===0;
   s.textContent=total>0?`✔ ${pendingFiles.length} fichier(s) · ${total} affectations prêtes`:'⚠ Aucune affectation trouvée';
   s.className='dz-status '+(total>0?'ok':'err');
 }
@@ -490,9 +505,17 @@ function parseAGATT(html){
       if(tds.length<3)return;
       tds[1].querySelectorAll('p').forEach((p,j)=>{
         const agent=p.textContent.trim();
-        const h=tds[2].querySelectorAll('p')[j]?.textContent||'';
+        const h=(tds[2].querySelectorAll('p')[j]?.textContent||'').trim();
         if(!agent)return;
-        const periode=h.includes('07:15')?'Jour':'Nuit';
+        let periode='';
+        if(/07:15\s*[-–]\s*19:15/.test(h) || /07:15.*19:15/.test(h)) periode='Jour';
+        else if(/19:15\s*[-–]\s*07:15/.test(h) || /19:15.*07:15/.test(h)) periode='Nuit';
+        else {
+          const lower=h.toLowerCase();
+          if(lower.includes('jour')) periode='Jour';
+          else if(lower.includes('nuit')) periode='Nuit';
+          else periode='Nuit';
+        }
         const key=`${date}|${agent}|${engin}|${periode}`;
         if(!seen.has(key)){seen.add(key);recs.push({date,agent,engin,periode})}
       });
@@ -528,9 +551,9 @@ function normDate(d){
   return d;
 }
 function normPeriode(p){
-  const l=p.toLowerCase();
-  if(l.includes('jour')||l==='1'||l==='p1')return'Jour';
-  if(l.includes('nuit')||l==='2'||l==='p2')return'Nuit';
+  const l=p.toLowerCase().trim();
+  if(l.includes('jour')||l==='1'||l==='p1'||/07:15.*19:15/.test(l))return'Jour';
+  if(l.includes('nuit')||l==='2'||l==='p2'||/19:15.*07:15/.test(l))return'Nuit';
   return p;
 }
 
