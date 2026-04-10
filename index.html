@@ -55,8 +55,8 @@ main{max-width:1400px;margin:0 auto;padding:2rem}
 .section-title::after{content:'';flex:1;height:1px;background:linear-gradient(to right,var(--gris),transparent)}
 
 .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-bottom:2.5rem}
-.stat-card{background:var(--charbon);border:1px solid var(--acier);border-top:3px solid var(--rouge);padding:1.25rem 1rem;transition:transform .2s}
-.stat-card:hover{transform:translateY(-2px)}
+.{background:var(--charbon);border:1px solid var(--acier);border-top:3px solid var(--rouge);padding:1.25rem 1rem;transition:transform .2s}
+.:hover{transform:translateY(-2px)}
 .stat-label{font-size:.7rem;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--gris-clair);margin-bottom:.5rem}
 .stat-value{font-family:'Barlow Condensed',sans-serif;font-size:2.4rem;font-weight:800;line-height:1}
 .stat-value.accent{color:var(--rouge-vif)}
@@ -615,9 +615,9 @@ function renderStats(data){
   }).length;
   const piquetsSolicitantsPct = total ? Math.round((piquetsSolicitantsCount/total)*100) : 0;
   document.getElementById('statsGrid').innerHTML=`
-    <div class="stat-card"><div class="stat-label">Total affectations</div><div class="stat-value accent">${total}</div><div class="stat-sub">hors SOG / stationnaire · sur ${months} mois</div></div>
-    <div class="stat-card"><div class="stat-label">Périodes Jour</div><div class="stat-value" style="color:var(--jour-acc)">${jours}</div><div class="stat-sub">${total?Math.round(jours/total*100):0} %</div></div>
-    <div class="stat-card"><div class="stat-label">Périodes Nuit</div><div class="stat-value" style="color:var(--nuit-acc)">${nuits}</div><div class="stat-sub">${total?Math.round(nuits/total*100):0} %</div></div>
+    <div class=""><div class="stat-label">Total affectations</div><div class="stat-value accent">${total}</div><div class="stat-sub">sur ${months} mois</div></div>
+    <div class=""><div class="stat-label">Périodes Jour</div><div class="stat-value" style="color:var(--jour-acc)">${jours}</div><div class="stat-sub">${total?Math.round(jours/total*100):0} %</div></div>
+    <div class=""><div class="stat-label">Périodes Nuit</div><div class="stat-value" style="color:var(--nuit-acc)">${nuits}</div><div class="stat-sub">${total?Math.round(nuits/total*100):0} %</div></div>
     <div class="stat-card"><div class="stat-label">Piquets sollicitants</div><div class="stat-value" style="font-size:1.8rem;color:var(--or)">${piquetsSolicitantsPct}%</div><div class="stat-sub">${piquetsSolicitantsCount} VSAV + stationnaire nuit</div></div>
     <div class="stat-card"><div class="stat-label">Engin principal</div><div class="stat-value" style="font-size:1.4rem">${top?top.val:'—'}</div><div class="stat-sub">${top?top.count+' fois':''}</div></div>`;
 }
