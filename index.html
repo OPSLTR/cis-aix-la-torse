@@ -341,9 +341,9 @@ if (!cfg || !cfg.apiKey || cfg.apiKey === 'VOTRE_API_KEY') {
 
 <script>
 // ══════ CONFIG ══════
-const ENGIN_GROUPS  = { 'VSAV':['VSAV-91','VSAV-165'], 'FPTL':['FPTL-29'], 'EPS18':['EPS18-6'] };
-const ENGIN_COLORS  = { 'VSAV':'#2ECC71', 'FPTL':'#E74C3C', 'EPS18':'#E67E22' };
-const ENGINS_CIBLES = new Set(['EPS18-6','FPTL-29','VSAV-91','VSAV-165']);
+const ENGIN_GROUPS  = { 'VSAV':['VSAV-91','VSAV-165'], 'FPTL':['FPTL-29'], 'EPS18':['EPS18-6'], 'STATIONNAIRE':['STATIONNAIRE'] };
+const ENGIN_COLORS  = { 'VSAV':'#2ECC71', 'FPTL':'#E74C3C', 'EPS18':'#E67E22', 'STATIONNAIRE':'#5DADE2' };
+const ENGINS_CIBLES = new Set(['EPS18-6','FPTL-29','VSAV-91','VSAV-165','STATIONNAIRE']);
 const MONTHS = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
 
 function resolveEngin(raw) {
@@ -497,8 +497,9 @@ function parseAGATT(html){
   const date=normDate(dateTd.textContent.trim());
   const recs=[],seen=new Set();
   doc.querySelectorAll('table.piquetsEngins').forEach(t=>{
-    const engin=t.querySelector('td.nomEngin')?.textContent.trim();
-    if(!engin||!ENGINS_CIBLES.has(engin))return;
+  const enginRaw=t.querySelector('td.nomEngin')?.textContent.trim();
+  const engin=(enginRaw||'').toUpperCase();
+  if(!engin||!ENGINS_CIBLES.has(engin))return;
     t.querySelectorAll('tr').forEach((row,i)=>{
       if(i===0)return;
       const tds=row.querySelectorAll('td');
@@ -585,10 +586,16 @@ function renderStats(data){
   const total=data.length,jours=data.filter(d=>d.periode==='Jour').length,nuits=total-jours;
   const months=[...new Set(data.map(d=>d.date.slice(0,7)))].length;
   const top=mostFreq(data.map(d=>disp(d)));
+  const piquetsSolicitantsCount=data.filter(d=>{
+    const engin=(d.enginDisplay||resolveEngin(d.engin));
+    return engin==='VSAV' || (engin==='STATIONNAIRE' && d.periode==='Nuit');
+  }).length;
+  const piquetsSolicitantsPct=total?Math.round((piquetsSolicitantsCount/total)*100):0;
   document.getElementById('statsGrid').innerHTML=`
     <div class="stat-card"><div class="stat-label">Total affectations</div><div class="stat-value accent">${total}</div><div class="stat-sub">sur ${months} mois</div></div>
     <div class="stat-card"><div class="stat-label">Périodes Jour</div><div class="stat-value" style="color:var(--jour-acc)">${jours}</div><div class="stat-sub">${total?Math.round(jours/total*100):0} %</div></div>
     <div class="stat-card"><div class="stat-label">Périodes Nuit</div><div class="stat-value" style="color:var(--nuit-acc)">${nuits}</div><div class="stat-sub">${total?Math.round(nuits/total*100):0} %</div></div>
+    <div class="stat-card"><div class="stat-label">Piquets sollicitants</div><div class="stat-value" style="font-size:1.8rem;color:var(--or)">${piquetsSolicitantsPct}%</div><div class="stat-sub">${piquetsSolicitantsCount} affectations VSAV + stationnaire nuit</div></div>
     <div class="stat-card"><div class="stat-label">Engin principal</div><div class="stat-value" style="font-size:1.4rem">${top?top.val:'—'}</div><div class="stat-sub">${top?top.count+' fois':''}</div></div>`;
 }
 
