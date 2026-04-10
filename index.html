@@ -725,22 +725,92 @@ function renderMonthly(data){
 function applyFilters(){
   const agent=document.getElementById('agentSelect').value;
   const search=(document.getElementById('searchFilter')?.value||'').toLowerCase();
+
   let data=allData.filter(d=>d.agent===agent);
-  if(currentFilter!=='all')data=data.filter(d=>d.periode===currentFilter);
-  if(search)data=data.filter(d=>d.date.includes(search)||d.engin.toLowerCase().includes(search)||d.periode.toLowerCase().includes(search));
-  data=data.sort((a,b)=>b.date.localeCompare(a.date));
+
+  if(currentFilter!=='all') data=data.filter(d=>d.periode===currentFilter);
+
+  if(search){
+    data=data.filter(d =>
+      d.date.includes(search) ||
+      d.engin.toLowerCase().includes(search) ||
+      d.periode.toLowerCase().includes(search)
+    );
+  }
+
+  // 🔥 GROUPEMENT PAR DATE + PERIODE
+  const grouped = {};
+
+  data.forEach(d=>{
+    const key = `${d.date}|${d.periode}`;
+
+    if(!grouped[key]){
+      grouped[key]={
+        date:d.date,
+        periode:d.periode,
+        engins:[],
+        fonctions:[]
+      };
+    }
+
+    const engin = d.enginDisplay || resolveEngin(d.engin);
+
+    if(isFunctionGarde(engin)){
+      if(!grouped[key].fonctions.includes(engin)){
+        grouped[key].fonctions.push(engin);
+      }
+    } else {
+      if(!grouped[key].engins.includes(engin)){
+        grouped[key].engins.push(engin);
+      }
+    }
+  });
+
+  const rows = Object.values(grouped)
+    .sort((a,b)=>b.date.localeCompare(a.date));
+
   const body=document.getElementById('gardesBody');
-  if(!data.length){body.innerHTML='<tr><td colspan="3" class="empty-state">Aucune garde trouvée</td></tr>';return}
-  body.innerHTML=data.map(d=>{
-    const isJour=d.periode==='Jour';
-    const enginDisp=disp(d);
-    const color=ENGIN_COLORS[d.enginDisplay||resolveEngin(d.engin)]||'#888';
-    const sub=(!showDetail&&d.engin!==enginDisp)?`<span style="font-size:.7rem;color:rgba(0,0,0,.5);margin-left:.3rem">(${d.engin})</span>`:'';
-    const dateStr=new Date(d.date+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
-    return`<tr><td class="date-cell">${dateStr}</td>
-      <td><span class="badge ${isJour?'badge-jour':'badge-nuit'}">${isJour?'☀ Jour':'🌙 Nuit'}</span>
-      <span style="font-size:.72rem;color:var(--gris-clair);margin-left:.4rem">${isJour?'07:15 – 19:15':'19:15 – 07:15'}</span></td>
-      <td><span class="badge badge-engin" style="background:${color}">${enginDisp}</span>${sub}</td></tr>`;
+
+  if(!rows.length){
+    body.innerHTML='<tr><td colspan="3" class="empty-state">Aucune garde trouvée</td></tr>';
+    return;
+  }
+
+  body.innerHTML = rows.map(r=>{
+    const isJour = r.periode==='Jour';
+    const dateStr=new Date(r.date+'T12:00:00').toLocaleDateString('fr-FR',{
+      weekday:'short',day:'2-digit',month:'short',year:'numeric'
+    });
+
+    // 🔥 ENGINS puis FONCTIONS
+    const enginBadges = r.engins.map(e=>{
+      const color=ENGIN_COLORS[e]||'#888';
+      return `<span class="badge badge-engin" style="background:${color}">${e}</span>`;
+    }).join(' ');
+
+    const fonctionBadges = r.fonctions.map(f=>{
+      const color=ENGIN_COLORS[f]||'#888';
+      return `<span class="badge badge-engin" style="background:${color};opacity:.85">${f}</span>`;
+    }).join(' ');
+
+    return `
+      <tr>
+        <td class="date-cell">${dateStr}</td>
+
+        <td>
+          <span class="badge ${isJour?'badge-jour':'badge-nuit'}">
+            ${isJour?'☀ Jour':'🌙 Nuit'}
+          </span>
+          <span style="font-size:.72rem;color:var(--gris-clair);margin-left:.4rem">
+            ${isJour?'07:15 – 19:15':'19:15 – 07:15'}
+          </span>
+        </td>
+
+        <td>
+          ${enginBadges}
+          ${fonctionBadges}
+        </td>
+      </tr>`;
   }).join('');
 }
 
