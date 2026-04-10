@@ -167,7 +167,7 @@ input::placeholder{color:var(--gris)}
     <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap">
       <div id="dataInfo" style="font-size:.75rem;color:var(--gris-clair);font-family:'Barlow Condensed',sans-serif;letter-spacing:.05em"></div>
       <div style="flex:1"></div>
-      <button class="toggle-btn" style="font-size:.7rem;color:var(--gris)" onclick="toggleAdmin()">⚙ Admin</button>
+      <button id="adminToggleBtn" style="display:none;background:none;border:none;color:var(--gris);font-family:'Barlow Condensed',sans-serif;font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;text-decoration:underline;padding:0" onclick="toggleAdmin()">⚙ Admin</button>
     </div>
 
     <!-- ADMIN PANEL -->
@@ -710,6 +710,14 @@ function mostFreq(arr){
   const val=Object.keys(c).reduce((a,b)=>c[a]>c[b]?a:b);
   return{val,count:c[val]};
 }
+  (function(){
+  if(window.location.search.includes('admin')){
+    const btn=document.getElementById('adminToggleBtn');
+    if(btn) btn.style.display='block';
+    const panel=document.getElementById('adminPanel');
+    if(panel) panel.style.display='block';
+  }
+})();   
 </script>
 </body>
 </html>
