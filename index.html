@@ -152,7 +152,7 @@ input::placeholder{color:var(--gris)}
     <div class="pompier-select-wrap">
       <label>Agent</label>
       <select id="agentSelect" onchange="updateDashboard()">
-        <option value="">— Sélectionner —</option>
+        <option value="">— Sélectionner un agent—</option>
       </select>
     </div>
   </div>
@@ -588,9 +588,9 @@ function buildAgentList(){
   const prev=document.getElementById('agentSelect').value;
   const agents=[...new Set(allData.map(d=>d.agent))].sort();
   const sel=document.getElementById('agentSelect');
-  sel.innerHTML='<option value="">— Sélectionner —</option>';
+  sel.innerHTML='<option value="">— Sélectionner un agent—</option>';
   agents.forEach(a=>{const o=document.createElement('option');o.value=a;o.textContent=a;sel.appendChild(o)});
-  sel.value=agents.includes(prev)?prev:(agents[0]||'');
+  sel.value=agents.includes(prev)?prev:'';
 }
 
 function updateDashboard(){
